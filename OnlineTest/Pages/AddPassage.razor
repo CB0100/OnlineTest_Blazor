@@ -1,0 +1,448 @@
+﻿@page "/Addpassage/{Id}"
+@using OnlineTest.Data
+@inject NavigationManager navManager
+@inject ApplicationDbContext _dbContext
+<div>
+    <h2>Add / Update Passage Details</h2>
+    <div class="border p-2">
+        <div class="row">
+            <div class=" col-10">
+                <label>General Instruction</label>
+                <input type="text" @bind="passageobj.GeneralInstruction" required class="form-control" />
+            </div>
+            <div class=" col-2">
+                <label>Reading Time(In Minutes)</label>
+                <input type="text" @bind="passageobj.ReadingTime" required class="form-control" />
+            </div>
+        </div>
+        <div class="mt-3">
+            <div>
+                <div class="form-check form-check-inline">
+                    <input type="radio" value="Block" checked="@(selectedOption == "Block" ? "checked" : null)" @onchange="OnPassageSelectionChanged" class="form-check-input " />
+                    <label class="form-check-label">Block</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input type="radio" value="Video" checked="@(selectedOption == "Video" ? "checked" : null)" @onchange="OnPassageSelectionChanged" class="form-check-input" />
+                    <label class="form-check-label">Video</label>
+                </div>
+            </div>
+            <div>
+                @if (selectedOption == "Block")
+                {
+                    <div class="">
+                        <div class="d-flex">
+                            <label>Passage Block</label>
+                        </div>
+                        <RadzenHtmlEditor class="rz-html-editor-lg" @bind-Value="@htmlValue" UploadUrl="/Image" @oninput="@HandleHtmlEditorInput" @onchange="@HandleHtmlEditorChange"></RadzenHtmlEditor>
+                        <div class="row">
+                            <div class="col-9"></div>
+                            <div class="col">
+                                @if (errorMessage != null)
+                                {
+                                    <label class="text-danger mt-3">@errorMessage</label>
+                                }
+                                <button class="mt-2 float-end btn btn-primary" @onclick="@AddBlock">
+                                    @if (indexToEdit == -1)
+                                    {
+                                        <RadzenLabel>Add</RadzenLabel>
+                                    }
+                                    else
+                                    {
+                                        <RadzenLabel>Update</RadzenLabel>
+                                    } <RadzenLabel> Block</RadzenLabel>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (selectedOption == "Video")
+                {
+                    <div class="">
+                        <label>Video URL</label>
+                        <div class="d-flex">
+                            <input type="text" @bind="@VideoUrl" class="form-control col-10" />
+                            <button @onclick="@AddVideo" class="ms-2 btn btn-primary col-2">
+                                @{
+                                    if (indexToEdit == -1)
+                                    {
+                                        <RadzenLabel>Add</RadzenLabel>
+                                    }
+                                    else
+                                    {
+                                        <RadzenLabel>Update</RadzenLabel>
+                                    }
+                                }<RadzenLabel> Video</RadzenLabel>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (ShowTable)
+            {
+                <table class="table table-bordered mt-2">
+                    <thead>
+                        <tr>
+                            <th>Sr No</th>
+                            <th>Type</th>
+                            <th>Content</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < passagesClasseslist.Count; i++)
+                        {
+                            int index = i;
+                            <tr>
+                                <td>@(i + 1)</td>
+                                <td>@passagesClasseslist[i]?.ContentTypes</td>
+                                <td>@GetContentSnippet(passagesClasseslist[i].BlockorVideo)</td>
+                                <td><button @onclick="(e) => EditPassage(index)">Edit</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+    <div class="mt-2">
+        <button class="btn btn-success float-end" @onclick="SaveBlocks" Text="Submit">Submit</button>
+    </div>
+</div>
+@code {
+    [Parameter]
+    public string? Id { get; set; }
+    string selectedOption = "Block";
+    string htmlValue = "";
+    string VideoUrl = "";
+    bool Addbtnshow = true;
+    string? errorMessage = null;
+    bool ShowTable = false;
+    int maxpassageId;
+    int indexToEdit = -1;
+    List<PassagesClass> passagesClasseslist = new List<PassagesClass>();
+    TblPassage passageobj = new TblPassage();
+    List<TblPassageBlock> passageBlockList = new List<TblPassageBlock>();
+    List<TblPassageVideo> passageVideoList = new List<TblPassageVideo>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Convert.ToInt32(Id) != 0)
+        {
+            passageobj = await _dbContext.TblPassages.FirstOrDefaultAsync(m => m.Id == Convert.ToInt32(Id)) ?? new TblPassage();
+            if (passageobj != null)
+            {
+                passageBlockList = await _dbContext.TblPassageBlocks.Where(m => m.PassageId == passageobj.Id).ToListAsync();
+
+                foreach (var block in passageBlockList)
+                {
+                    PassagesClass passage = new PassagesClass()
+                        {
+                            BlockorVideo = block?.Block1?.ToString() ?? string.Empty,
+                            ContentTypes = "Block",
+                            ExistingID = block.Id
+                        };
+                    passagesClasseslist.Add(passage);
+                }
+                passageVideoList = await _dbContext.TblPassageVideos.Where(m => m.PassageId == passageobj.Id).ToListAsync();
+
+                foreach (var video in passageVideoList)
+                {
+                    PassagesClass passage = new PassagesClass()
+                        {
+                            BlockorVideo = video?.Video1?.ToString() ?? string.Empty,
+                            ContentTypes = "Video",
+                            ExistingID = video.Id
+                        };
+                    passagesClasseslist.Add(passage);
+                }
+                ShowTable = true;
+            }
+        }
+        else
+        {
+
+        }
+    }
+
+    private void OnPassageSelectionChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null)
+        {
+            selectedOption = e.Value?.ToString() ?? string.Empty;
+        }
+    }
+
+    void AddBlock()
+    {
+        if (!string.IsNullOrWhiteSpace(htmlValue))
+        {
+            //check length of EditorInput
+            int CharCount = CountCharacters(htmlValue);
+            if (CharCount <= 4000)
+            {
+                if (selectedOption == "Block")
+                {
+                    if (indexToEdit >= 0 && indexToEdit < passagesClasseslist.Count)
+                    {
+                        //update the existing Block
+                        passagesClasseslist[indexToEdit].BlockorVideo = htmlValue;
+                        passagesClasseslist[indexToEdit].ContentTypes = selectedOption;
+                        indexToEdit = -1;
+                    }
+                    else
+                    {
+                        PassagesClass passage = new PassagesClass()
+                            {
+                                BlockorVideo = htmlValue,
+                                ContentTypes = selectedOption,
+                                ExistingID = 0
+                            };
+                        // Add the new block
+                        passagesClasseslist.Add(passage);
+                    }
+                }
+                htmlValue = "";
+                ShowTable = true;
+                errorMessage = null;
+            }
+            else
+            {
+                errorMessage = "Maximum 4000 Characters are allowed.";
+            }
+        }
+    }
+
+    void AddVideo()
+    {
+        if (!string.IsNullOrWhiteSpace(VideoUrl))
+        {
+            if (selectedOption == "Video")
+            {
+                if (indexToEdit >= 0 && indexToEdit < passagesClasseslist.Count)
+                {
+                    //update the existing video
+                    passagesClasseslist[indexToEdit].BlockorVideo = VideoUrl;
+                    passagesClasseslist[indexToEdit].ContentTypes = selectedOption;
+                    indexToEdit = -1;
+                }
+                else
+                {
+                    PassagesClass passage = new PassagesClass()
+                        {
+                            BlockorVideo = VideoUrl,
+                            ContentTypes = selectedOption,
+                            ExistingID = 0
+                        };
+                    // Add the new video
+                    passagesClasseslist.Add(passage);
+                }
+            }
+
+            VideoUrl = "";
+            ShowTable = true;
+        }
+    }
+
+    private void EditPassage(int index)
+    {
+        // Store the index of the item being edited
+        indexToEdit = index;
+
+        if (passagesClasseslist[index]?.ContentTypes?.ToLower() == "block")
+        {
+            htmlValue = passagesClasseslist[index].BlockorVideo ?? string.Empty;
+            selectedOption = "Block";
+        }
+        else if (passagesClasseslist[index]?.ContentTypes?.ToLower() == "video")
+        {
+            VideoUrl = passagesClasseslist[index].BlockorVideo ?? string.Empty;
+            selectedOption = "Video";
+        }
+    }
+
+    private async Task SaveBlocks()
+    {
+        if (Convert.ToInt32(Id) == 0)
+        {
+            if (passageobj != null)
+            {
+                passageobj.CreatedBy = "Admin";
+                passageobj.CreatedOn = DateTime.Now;
+                passageobj.IsActive = true;
+                passageobj.IsDeleted = false;
+
+                await _dbContext.TblPassages.AddAsync(passageobj);
+                await _dbContext.SaveChangesAsync();
+                maxpassageId = _dbContext.TblPassages.Max(m => m.Id);
+            }
+        }
+        else
+        {
+            _dbContext.TblPassages.Update(passageobj);
+            await _dbContext.SaveChangesAsync();
+            maxpassageId = Convert.ToInt32(Id);
+        }
+        if (passagesClasseslist != null)
+        {
+            for (int i = 0; i < passagesClasseslist.Count; i++)
+            {
+                if (passagesClasseslist[i]?.ContentTypes?.ToLower() == "block")
+                {
+                    if (passageobj?.Id == 0)
+                    {
+                        TblPassageBlock tblPassageBlockobj = new TblPassageBlock()
+                            {
+                                PassageId = maxpassageId,
+                                Block1 = passagesClasseslist[i].BlockorVideo,
+                                CreatedBy = "Admin",
+                                CreatedOn = DateTime.Now,
+                                IsActive = true,
+                                IsDeleted = false
+                            };
+
+                        await _dbContext.TblPassageBlocks.AddAsync(tblPassageBlockobj);
+                        await _dbContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        if (passageobj != null)
+                        {
+                            int update = 0;
+                            var datalist = await _dbContext.TblPassageBlocks.Where(m => m.PassageId == passageobj.Id).ToListAsync();
+                            for (int j = 0; j < datalist.Count; j++)
+                            {
+                                if (passagesClasseslist[i]?.ExistingID == datalist[j].Id && passagesClasseslist[i]?.ContentTypes?.ToLower() == "block")
+                                {
+                                    update = passagesClasseslist[i].ExistingID;
+                                    break;
+                                }
+                            }
+                            if (update != 0)
+                            {
+                                TblPassageBlock tblPassageBlockobj = await _dbContext.TblPassageBlocks.FirstOrDefaultAsync(m => m.Id == update) ?? new TblPassageBlock();
+                                tblPassageBlockobj.Block1 = passagesClasseslist[i]?.BlockorVideo;
+
+                                await _dbContext.SaveChangesAsync();
+                                update = 0;
+                            }
+                            else
+                            {
+                                TblPassageBlock tblPassageBlockobj = new TblPassageBlock()
+                                    {
+                                        PassageId = maxpassageId,
+                                        Block1 = passagesClasseslist[i]?.BlockorVideo,
+                                        CreatedBy = "Admin",
+                                        CreatedOn = DateTime.Now,
+                                        IsActive = true,
+                                        IsDeleted = false
+                                    };
+
+                                await _dbContext.TblPassageBlocks.AddAsync(tblPassageBlockobj);
+                                await _dbContext.SaveChangesAsync();
+                            }
+                        }
+                    }
+                }
+                else if (passagesClasseslist[i]?.ContentTypes?.ToLower() == "video")
+                {
+                    if (passageobj?.Id == 0)
+                    {
+                        TblPassageVideo tblPassageVideoobj = new TblPassageVideo()
+                            {
+                                PassageId = maxpassageId,
+                                Video1 = passagesClasseslist[i]?.BlockorVideo,
+                                CreatedBy = "Admin",
+                                CreatedOn = DateTime.Now,
+                                IsActive = true,
+                                IsDeleted = false
+                            };
+
+                        await _dbContext.TblPassageVideos.AddAsync(tblPassageVideoobj);
+                        await _dbContext.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        if (passageobj != null)
+                        {
+                            int update = 0;
+                            var datalist = await _dbContext.TblPassageVideos.Where(m => m.PassageId == passageobj.Id).ToListAsync();
+                            for (int j = 0; j < datalist.Count; j++)
+                            {
+                                if (passagesClasseslist[i]?.ExistingID == datalist[j].Id && passagesClasseslist[i]?.ContentTypes?.ToLower() == "video")
+                                {
+                                    update = passagesClasseslist[i].ExistingID;
+                                    break;
+                                }
+                            }
+                            if (update != 0)
+                            {
+
+                                TblPassageVideo tblPassageVideoobj = await _dbContext.TblPassageVideos.FirstOrDefaultAsync(m => m.Id == update) ?? new TblPassageVideo();
+                                tblPassageVideoobj.Video1 = passagesClasseslist[i]?.BlockorVideo;
+
+                                await _dbContext.SaveChangesAsync();
+                                update = 0;
+                            }
+                            else
+                            {
+                                TblPassageVideo tblPassageVideoobj = new TblPassageVideo()
+                                    {
+                                        PassageId = maxpassageId,
+                                        Video1 = passagesClasseslist[i]?.BlockorVideo,
+                                        CreatedBy = "Admin",
+                                        CreatedOn = DateTime.Now,
+                                        IsActive = true,
+                                        IsDeleted = false
+                                    };
+
+                                await _dbContext.TblPassageVideos.AddAsync(tblPassageVideoobj);
+                                await _dbContext.SaveChangesAsync();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        navManager.NavigateTo("Passages");
+    }
+
+    void HandleHtmlEditorInput(ChangeEventArgs args)
+    {
+        errorMessage = null;
+        if (args.Value != null)
+        {
+            htmlValue = args.Value?.ToString() ?? string.Empty; ;
+        }
+    }
+
+    void HandleHtmlEditorChange(ChangeEventArgs args)
+    {
+        errorMessage = null;
+        if (args.Value != null)
+        {
+            htmlValue = args.Value.ToString() ?? string.Empty; ;
+        }
+    }
+
+    int CountCharacters(string text)
+    {
+        //removing HTML elements from string
+        string characters = System.Text.RegularExpressions.Regex.Replace(text, "<.*?>", string.Empty);
+        //string[] words = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        return characters.Length;
+    }
+
+    string GetContentSnippet(string content)
+    {
+        string snippet = System.Text.RegularExpressions.Regex.Replace(content, "<[^>]+>|&\\w+;", string.Empty);
+        int maxSnippetLength = 175;
+        if (snippet.Length > maxSnippetLength)
+        {
+            return snippet.Substring(0, maxSnippetLength) + "...";
+        }
+        else
+        {
+            return snippet;
+        }
+    }
+}

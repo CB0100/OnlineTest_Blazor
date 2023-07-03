@@ -1,0 +1,19 @@
+﻿.rz-html-editor-sm {
+    min-height: 250px;
+}
+
+.rz-html-editor-xs {
+    min-height: 100px;
+}
+
+.rz-html-editor-lg {
+    min-height: 450px;
+}
+
+.addpasdiv {
+    height: 632px;
+}
+
+.viewbtn {
+    cursor: pointer;
+}
