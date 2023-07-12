@@ -89,13 +89,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (int i = 0; i < passagesClasseslist.Count; i++)
+                        @foreach (var passage in passagesClasseslist.Select((item, index) => new { item, index }))
                         {
-                            int index = i;
+                            int index = passage.index;
+                            var passageItem = passage.item;
                             <tr>
-                                <td>@(i + 1)</td>
-                                <td>@passagesClasseslist[i]?.ContentTypes</td>
-                                <td>@GetContentSnippet(passagesClasseslist[i].BlockorVideo)</td>
+                                <td>@(index + 1)</td>
+                                <td>@passageItem?.ContentTypes</td>
+                                <td>@GetContentSnippet(passageItem?.BlockorVideo ?? "")</td>
                                 <td><button @onclick="(e) => EditPassage(index)">Edit</button></td>
                             </tr>
                         }
@@ -135,28 +136,37 @@
 
                 foreach (var block in passageBlockList)
                 {
-                    PassagesClass passage = new PassagesClass()
-                        {
-                            BlockorVideo = block?.Block1?.ToString() ?? string.Empty,
-                            ContentTypes = "Block",
-                            ExistingID = block.Id
-                        };
-                    passagesClasseslist.Add(passage);
+                    if (block != null)
+                    {
+                        PassagesClass passage = new PassagesClass()
+                            {
+                                BlockorVideo = block.Block1?.ToString() ?? string.Empty,
+                                ContentTypes = "Block",
+                                ExistingID = block.Id,
+                                Order = block.Order
+                            };
+                        passagesClasseslist.Add(passage);
+                    }
                 }
                 passageVideoList = await _dbContext.TblPassageVideos.Where(m => m.PassageId == passageobj.Id).ToListAsync();
 
                 foreach (var video in passageVideoList)
                 {
-                    PassagesClass passage = new PassagesClass()
-                        {
-                            BlockorVideo = video?.Video1?.ToString() ?? string.Empty,
-                            ContentTypes = "Video",
-                            ExistingID = video.Id
-                        };
-                    passagesClasseslist.Add(passage);
+                    if (video != null)
+                    {
+                        PassagesClass passage = new PassagesClass()
+                            {
+                                BlockorVideo = video.Video1?.ToString() ?? string.Empty,
+                                ContentTypes = "Video",
+                                ExistingID = video.Id,
+                                Order = video.Order
+                            };
+                        passagesClasseslist.Add(passage);
+                    }
                 }
                 ShowTable = true;
             }
+            passagesClasseslist = passagesClasseslist.OrderBy(m => m.Order).ToList();
         }
         else
         {
@@ -278,6 +288,8 @@
         }
         else
         {
+            passageobj.Modified = "Admin";
+            passageobj.ModifiedOn = DateTime.Now;
             _dbContext.TblPassages.Update(passageobj);
             await _dbContext.SaveChangesAsync();
             maxpassageId = Convert.ToInt32(Id);
@@ -297,7 +309,8 @@
                                 CreatedBy = "Admin",
                                 CreatedOn = DateTime.Now,
                                 IsActive = true,
-                                IsDeleted = false
+                                IsDeleted = false,
+                                Order = i + 1
                             };
 
                         await _dbContext.TblPassageBlocks.AddAsync(tblPassageBlockobj);
@@ -321,7 +334,8 @@
                             {
                                 TblPassageBlock tblPassageBlockobj = await _dbContext.TblPassageBlocks.FirstOrDefaultAsync(m => m.Id == update) ?? new TblPassageBlock();
                                 tblPassageBlockobj.Block1 = passagesClasseslist[i]?.BlockorVideo;
-
+                                tblPassageBlockobj.ModifiedOn = DateTime.Now;
+                                tblPassageBlockobj.Modified = "Admin";
                                 await _dbContext.SaveChangesAsync();
                                 update = 0;
                             }
@@ -334,7 +348,8 @@
                                         CreatedBy = "Admin",
                                         CreatedOn = DateTime.Now,
                                         IsActive = true,
-                                        IsDeleted = false
+                                        IsDeleted = false,
+                                        Order = i + 1
                                     };
 
                                 await _dbContext.TblPassageBlocks.AddAsync(tblPassageBlockobj);
@@ -354,7 +369,8 @@
                                 CreatedBy = "Admin",
                                 CreatedOn = DateTime.Now,
                                 IsActive = true,
-                                IsDeleted = false
+                                IsDeleted = false,
+                                Order = i + 1
                             };
 
                         await _dbContext.TblPassageVideos.AddAsync(tblPassageVideoobj);
@@ -379,7 +395,8 @@
 
                                 TblPassageVideo tblPassageVideoobj = await _dbContext.TblPassageVideos.FirstOrDefaultAsync(m => m.Id == update) ?? new TblPassageVideo();
                                 tblPassageVideoobj.Video1 = passagesClasseslist[i]?.BlockorVideo;
-
+                                tblPassageVideoobj.ModifiedOn = DateTime.Now;
+                                tblPassageVideoobj.Modified = "Admin";
                                 await _dbContext.SaveChangesAsync();
                                 update = 0;
                             }
@@ -392,7 +409,8 @@
                                         CreatedBy = "Admin",
                                         CreatedOn = DateTime.Now,
                                         IsActive = true,
-                                        IsDeleted = false
+                                        IsDeleted = false,
+                                        Order = i + 1
                                     };
 
                                 await _dbContext.TblPassageVideos.AddAsync(tblPassageVideoobj);
@@ -420,7 +438,7 @@
         errorMessage = null;
         if (args.Value != null)
         {
-            htmlValue = args.Value.ToString() ?? string.Empty; ;
+            htmlValue = args.Value.ToString() ?? string.Empty;
         }
     }
     int CountCharacters(string text)

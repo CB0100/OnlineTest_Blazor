@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "zASySA9yh3jojyWQ49fB4J6hzByIbhUpTjfC/vCCXuo=",
+  "Hash": "si4+1aNY36BM1fZVh38AyQ7HN06cCgDqFCwfrKt20ps=",
   "Source": "OnlineTest",
   "BasePath": "_content/OnlineTest",
   "Mode": "Default",
@@ -848,6 +848,23 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\favicon.png"
+    },
+    {
+      "Identity": "D:\\Anand\\RND\\OnlineTest\\OnlineTest\\wwwroot\\JavaScript.js",
+      "SourceId": "OnlineTest",
+      "SourceType": "Discovered",
+      "ContentRoot": "D:\\Anand\\RND\\OnlineTest\\OnlineTest\\wwwroot\\",
+      "BasePath": "_content/OnlineTest",
+      "RelativePath": "JavaScript.js",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\JavaScript.js"
     }
   ]
 }

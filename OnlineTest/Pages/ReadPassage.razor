@@ -1,0 +1,194 @@
+﻿@page "/ReadPassage/{ID}"
+@using OnlineTest.Data;
+@inject NavigationManager navManager
+@inject ApplicationDbContext _dbContext
+@using Microsoft.AspNetCore.Html
+
+<div class="container">
+    <h3 class="text-center mt-4">@passageobj.GeneralInstruction</h3>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            @foreach (var passage in passagesClasseslist.OrderBy(m => m.Order))
+            {
+                if (passage != null)
+                {
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            @if (passage?.ContentTypes?.ToLower() == "block")
+                            {
+                                <div class="content-block">
+                                    @(
+                                        (MarkupString)passage.BlockorVideo
+                                        )
+                                </div>
+                            }
+                            else if (passage?.ContentTypes?.ToLower() == "video")
+                            {
+                                <div class="embed-responsive embed-responsive-16by9">
+                                    <iframe class="embed-responsive-item" src="@GetYouTubeEmbedUrl(passage.BlockorVideo)" allowfullscreen></iframe>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-8 text-center">
+            @if (previousId != 0)
+            {
+                <button class="btn btn-primary float-start" @onclick="PreviousClicked">Previous</button>
+            }
+            @{
+                if (nextId != 0)
+                {
+                    <button class="btn btn-primary float-end" @onclick="NextClicked">Next</button>
+                }
+                else if (showcompletedbtn)
+                {
+                    <button class="btn btn-primary float-end" @onclick="CompletedClicked">Completed</button>
+                }
+            }
+        </div>
+    </div>
+    <div class="timer-container">
+        <p class="timer">@remainingTime.ToString("mm\\:ss")</p>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? ID { get; set; }
+    TblPassage passageobj = new TblPassage();
+    List<TblPassageBlock> passageBlockList = new List<TblPassageBlock>();
+    List<TblPassageVideo> passageVideoList = new List<TblPassageVideo>();
+    List<PassagesClass> passagesClasseslist = new List<PassagesClass>();
+
+    private DateTime startTime;
+    private TimeSpan remainingTime;
+    private System.Threading.Timer? timer;
+
+    private int previousId = 0;
+    private int nextId = 0;
+    private bool showcompletedbtn = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Convert.ToInt32(ID) != 0)
+        {
+            passageobj = await _dbContext.TblPassages.FirstOrDefaultAsync(m => m.Id == Convert.ToInt32(ID)) ?? new TblPassage();
+            if (passageobj != null)
+            {
+                passageBlockList = await _dbContext.TblPassageBlocks.Where(m => m.PassageId == passageobj.Id).ToListAsync();
+
+                foreach (var block in passageBlockList)
+                {
+                    if (block != null)
+                    {
+                        PassagesClass passage = new PassagesClass()
+                            {
+                                BlockorVideo = block.Block1?.ToString() ?? string.Empty,
+                                ContentTypes = "Block",
+                                ExistingID = block.Id,
+                                Order = block.Order
+                            };
+                        passagesClasseslist.Add(passage);
+                    }
+                }
+                passageVideoList = await _dbContext.TblPassageVideos.Where(m => m.PassageId == passageobj.Id).ToListAsync();
+
+                foreach (var video in passageVideoList)
+                {
+                    if (video != null)
+                    {
+                        PassagesClass passage = new PassagesClass()
+                            {
+                                BlockorVideo = video.Video1?.ToString() ?? string.Empty,
+                                ContentTypes = "Video",
+                                ExistingID = video.Id,
+                                Order = video.Order
+                            };
+                        passagesClasseslist.Add(passage);
+                    }
+                }
+            }
+        }
+
+        startTime = DateTime.Now;
+        remainingTime = TimeSpan.FromMinutes(passageobj.ReadingTime);
+
+        timer = new System.Threading.Timer(TimerElapsed, null, 1000, 1000);
+        await showPreviousClicked(Convert.ToInt32(ID));
+
+    }
+    private async void TimerElapsed(object state)
+    {
+        var elapsedTime = DateTime.Now - startTime;
+        remainingTime = TimeSpan.FromMinutes(passageobj.ReadingTime) - elapsedTime;
+
+        if (remainingTime <= TimeSpan.Zero)
+        {
+            remainingTime = TimeSpan.Zero;
+            await showNextClicked(Convert.ToInt32(ID));
+            if (nextId == 0)
+            {
+                showcompletedbtn = true;
+            }
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+    public string GetYouTubeEmbedUrl(string videoUrl)
+    {
+        var videoId = GetYouTubeVideoId(videoUrl);
+        return $"https://www.youtube.com/embed/{videoId}";
+    }
+
+    public string GetYouTubeVideoId(string videoUrl)
+    {
+        var uri = new Uri(videoUrl);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        return query["v"];
+    }
+
+    private async Task showPreviousClicked(int id)
+    {
+        var datalist = await _dbContext.TblPassages.ToListAsync();
+        foreach (var item in datalist)
+        {
+            if (item.Id < id)
+            {
+                previousId = item.Id;
+                break;
+            }
+        }
+        previousId = (previousId > 0) ? previousId : 0;
+    }
+    private async Task showNextClicked(int id)
+    {
+        var datalist = await _dbContext.TblPassages.ToListAsync();
+        foreach (var item in datalist)
+        {
+            if (item.Id > id)
+            {
+                nextId = item.Id;
+                break;
+            }
+        }
+        nextId = (nextId > 0) ? nextId : 0;
+    }
+
+    private void PreviousClicked()
+    {
+        navManager.NavigateTo($"/ReadPassage/{previousId}", forceLoad: true);
+    }
+    private void CompletedClicked()
+    {
+        navManager.NavigateTo("/Passages");
+    }
+    private void NextClicked()
+    {
+        navManager.NavigateTo($"/ReadPassage/{nextId}", forceLoad: true);
+    }
+}

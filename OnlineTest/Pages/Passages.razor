@@ -30,6 +30,7 @@
                     <td>
                         <div class="d-inline-flex">
                             <p class="viewbtn btn btn-primary" @onclick="(e) => EditPassage(passage.Id)">Edit Passage</p>
+                            <p class="viewbtn ms-2 btn btn-primary" @onclick="(e) => ReadPassages(passage.Id)">Read Passage</p>
                         </div>
                     </td>
                 </tr>
@@ -50,5 +51,9 @@
     private void EditPassage(int id)
     {
         NavManager.NavigateTo($"/AddPassage/{id}");
+    }
+    private void ReadPassages(int id)
+    {
+        NavManager.NavigateTo($"/ReadPassage/{id}");
     }
 }

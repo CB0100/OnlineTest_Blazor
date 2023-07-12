@@ -22,6 +22,7 @@ public partial class TblPassageBlock
     public DateTime? ModifiedOn { get; set; }
 
     public string? Modified { get; set; }
+    public int Order { get; set; }
 
     public virtual TblPassage Passage { get; set; } = null!;
 }

@@ -27,9 +27,9 @@ public partial class TblCandidate
 
     public string? Address2 { get; set; }
 
-    public string Country { get; set; } = null!;
+    public int Country { get; set; }
 
-    public string? State { get; set; }
+    public int State { get; set; }
 
     public string? City { get; set; }
 

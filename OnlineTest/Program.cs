@@ -13,9 +13,12 @@ builder.Services.AddScoped<Radzen.DialogService>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-}/*,ServiceLifetime.Transient*/);
+}, ServiceLifetime.Transient);
 
-
+builder.Services.AddDbContext<DummyContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CountrystateConnection"));
+}, ServiceLifetime.Transient);
 
 var app = builder.Build();
 

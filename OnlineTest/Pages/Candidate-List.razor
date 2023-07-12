@@ -1,0 +1,85 @@
+﻿@page "/candidatelist"
+@using OnlineTest.Data;
+@using OnlineTest.ViewModel;
+@inject ApplicationDbContext _dbContext
+@inject NavigationManager NavManager
+@inject DummyContext _dummydbContext
+
+<div>
+    <table>
+        <thead>
+            <tr>
+                <th>Candidate ID</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Country</th>
+                <th>State</th>
+                <th>City</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (CandidateList.Any())
+            {
+                @foreach (var item in CandidateList)
+                {
+                    @if (item.candidate != null)
+                    {
+                        <tr>
+                            <td>@item.candidate.CandidateId</td>
+                            <td>@item.candidate.FirstName @item.candidate.MiddleName @item.candidate.LastName</td>
+                            <td>@item.candidate.MobileNo</td>
+                            <td>@item.candidate.Email</td>
+                            <td>@item.country?.CountryName</td>
+                            <td>@item.state?.StateName</td>
+                            <td>@item.candidate.City</td>
+                            <td>
+                                <div>
+                                    <button @onclick="()=>EditCandidate(item.candidate.Id)"><i class="oi oi-pencil"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+
+    private IEnumerable<CandidateListViewModel> CandidateList = new List<CandidateListViewModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        List<TblCandidate> candidates = await _dbContext.TblCandidates.ToListAsync();
+        List<Country> countries = await _dummydbContext.Countries.ToListAsync();
+        List<State> states = await _dummydbContext.States.ToListAsync();
+        CandidateList = candidates
+               .Select(e => new CandidateListViewModel
+                   {
+                       candidate = e,
+                       country = countries.FirstOrDefault(d => d.CountryId == e.Country),
+                       state = states.FirstOrDefault(i => i.StateId == e.State)
+                   });
+
+        #region Another Join
+        //CandidateList = from e in candidates
+        //                join d in countries on e.Country equals d.CountryId into table1
+        //                from d in table1.ToList()
+        //                join i in states on e.State equals i.StateId into table2
+        //                from i in table2.ToList()
+        //                select new CandidateListViewModel
+        //                    {
+        //                        candidate = e,
+        //                        country = d,
+        //                        state = i
+        //                    };
+        #endregion
+    }
+    private void EditCandidate(long ID)
+    {
+        NavManager.NavigateTo($"/candidateform/{ID}");
+    }
+}

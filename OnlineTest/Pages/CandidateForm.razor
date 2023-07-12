@@ -1,0 +1,350 @@
+﻿@page "/candidateform/{ID}"
+@using OnlineTest.Data;
+@inject ApplicationDbContext _dbContext
+@inject NavigationManager NavManager
+@using Microsoft.AspNetCore.Components.Forms
+@inject DummyContext _dummydbContext
+
+<h3>Add/Edit Candidate</h3>
+
+@if (IsEditMode)
+{
+    <h4>Edit Candidate</h4>
+}
+else
+{
+    <h4>Add Candidate</h4>
+}
+<EditForm Model="@Candidate" OnValidSubmit="SaveCandidate">
+    <DataAnnotationsValidator />
+
+    <div class="form-row">
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="firstName">First Name<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.FirstName)" />
+                </div>
+            </div>
+            <InputText id="firstName" class="form-control" @bind-Value="Candidate.FirstName" />
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="middleName">Middle Name<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.MiddleName)" />
+                </div>
+            </div>
+            <InputText id="middleName" class="form-control" @bind-Value="Candidate.MiddleName" />
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="lastName">Last Name<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.LastName)" />
+                </div>
+            </div>
+            <InputText id="lastName" class="form-control" @bind-Value="Candidate.LastName" />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="mobileNo">Mobile No<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.MobileNo)" />
+                </div>
+            </div>
+            <InputText id="mobileNo" class="form-control" @bind-Value="Candidate.MobileNo" />
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="profilePic">Profile Picture<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.ProfilePic)" />
+                </div>
+            </div>
+            <InputFile id="profilePic" class="form-control" OnChange="HandleFileSelection" />
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="email">Email<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.Email)" />
+                </div>
+            </div>
+            <InputText id="email" class="form-control" @bind-Value="Candidate.Email" />
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="password">Password<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.Password)" />
+                </div>
+            </div>
+            <input type="password" id="password" class="form-control" @bind="Candidate.Password" />
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="confirmPassword">Confirm Password<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    @if (PasswordNotmatched != null)
+                    {
+                        <label class="text-danger">@PasswordNotmatched</label>
+                    }
+                </div>
+            </div>
+            <input type="password" id="confirmPassword" class="form-control" @bind="ConfirmPassword" />
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="address">Address<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.Address)" />
+                </div>
+            </div>
+            <InputText id="address" class="form-control" @bind-Value="Candidate.Address" />
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="address2">Alternate Address<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.Address2)" />
+                </div>
+            </div>
+            <InputText id="address2" class="form-control" @bind-Value="Candidate.Address2" />
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="zip">Zip<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.Zip)" />
+                </div>
+            </div>
+            <InputText id="zip" class="form-control" @bind-Value="Candidate.Zip" />
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5"><label for="Country" class="control-select">Country<span class="text-danger">*</span></label></div>
+                <div class="col">
+                    @if (countrynotselected != null)
+                    {
+                        <label class="text-danger">@countrynotselected</label>
+                    }
+                </div>
+            </div>
+            <select class="form-control" @bind="Candidate.Country" @oninput="OnCountrySelectionChanged">
+                <option value="0" disabled>Select Country</option>
+                @if (countries != null)
+                {
+                    foreach (var country in countries)
+                    {
+                        if (country.IsSelected)
+                        {
+                            <option value="@country.CountryId" selected>@country.CountryName</option>
+                        }
+                        else
+                        {
+                            <option value="@country.CountryId">@country.CountryName</option>
+                        }
+                    }
+                }
+            </select>
+        </div>
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-3"><label for="State" class="control-select">State<span class="text-danger">*</span></label></div>
+                <div class="col">
+                    @if (statenotselected != null)
+                    {
+                        <label class="text-danger">@statenotselected</label>
+                    }
+                </div>
+            </div>
+            <select class="form-control" @bind="Candidate.State" @oninput="OnStateSelectionChanged">
+                <option value="0" selected disabled>Select State</option>
+                @if (states != null)
+                {
+                    @foreach (var state in states)
+                    {
+                        if (state.IsSelected)
+                        {
+                            <option value="@state.StateId" selected>@state.StateName</option>
+                        }
+                        else
+                        {
+                            <option value="@state.StateId">@state.StateName</option>
+                        }
+                    }
+                }
+                }
+            </select>
+        </div>
+
+        <div class="form-group col">
+            <div class="row">
+                <div class="col-5">
+                    <label for="city">City<span class="text-danger">*</span></label>
+                </div>
+                <div class="col">
+                    <ValidationMessage For="@(() => Candidate.City)" />
+                </div>
+            </div>
+            <InputText id="city" class="form-control" @bind-Value="Candidate.City" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</EditForm>
+@code {
+    [Parameter]
+    public string? ID { get; set; } = null;
+    private TblCandidate Candidate { get; set; } = new TblCandidate();
+    private bool IsEditMode { get; set; } = false;
+
+    private string? ConfirmPassword { get; set; } = null;
+    private string? countrynotselected = null;
+    private string? statenotselected = null;
+    private string? PasswordNotmatched = null;
+    private List<Country>? countries = null;
+    private List<State>? states = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        countries = await _dummydbContext.Countries.ToListAsync();
+        if (Convert.ToInt32(ID) != 0)
+        {
+            IsEditMode = true;
+            // Fetch the candidate from the database and populate the form
+            Candidate = _dbContext.TblCandidates.FirstOrDefault(c => c.Id == Convert.ToInt32(ID)) ?? new TblCandidate();
+            foreach (var item in countries)
+            {
+                if (item.CountryId == Candidate.Country)
+                {
+                    item.IsSelected = true;
+                }
+            }
+            states = await _dummydbContext.States.Where(m => m.CountryId == Candidate.Country).ToListAsync();
+            foreach (var item in states)
+            {
+                if (item.StateId == Candidate.State)
+                {
+                    item.IsSelected = true;
+                }
+            }
+        }
+        else
+        {
+            IsEditMode = false;
+        }
+    }
+    private async Task OnCountrySelectionChanged(ChangeEventArgs e)
+    {
+        if (e != null)
+        {
+            string? value = e.Value?.ToString() ?? null;
+            if (value != null)
+            {
+                Candidate.Country = int.Parse(value);
+            }
+        }
+        states = await _dummydbContext.States.Where(m => m.CountryId == Candidate.Country).OrderBy(m => m.StateName).ToListAsync();
+        Candidate.State = 0;
+    }
+    private void OnStateSelectionChanged(ChangeEventArgs e)
+    {
+        if (e != null)
+        {
+            string? value = e.Value?.ToString() ?? null;
+            if (value != null)
+            {
+                Candidate.State = int.Parse(value);
+            }
+        }
+    }
+    private async Task SaveCandidate()
+    {
+        bool error = false;
+        PasswordNotmatched = (Candidate.Password != ConfirmPassword) ? "Passwords Mismatched" : null;
+        if (PasswordNotmatched != null) error = true;
+        countrynotselected = (Candidate.Country == 0) ? "Please select a Country." : null;
+        if (countrynotselected != null) error = true;
+        statenotselected = (Candidate.State == 0) ? "Please select a State." : null;
+        if (statenotselected != null) error = true;
+
+        if (error) return;
+        if (IsEditMode)
+        {
+            Candidate.Modified = "Admin";
+            Candidate.ModifiedOn = DateTime.Now;
+            //_dbContext.TblCandidates.Update(Candidate);
+        }
+        else
+        {
+            Candidate.CreatedBy = "Admin";
+            Candidate.CreatedOn = DateTime.Now;
+            Candidate.CandidateId = await GetCandidateId();
+            await _dbContext.TblCandidates.AddAsync(Candidate);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        NavManager.NavigateTo("/candidatelist");
+    }
+    public async Task<string> GetCandidateId()
+    {
+        string RegistrationId = string.Empty;
+        long RegNo = 0;
+        RegNo = await _dbContext.TblCandidates.AnyAsync() ? await _dbContext.TblCandidates.MaxAsync(m => m.Id) : 0;
+        RegNo = RegNo == 0 ? 1 : RegNo;
+        RegistrationId = "CDL1" + RegNo.ToString("D3") /*string.Format("0000", RegNo)*/;
+        return RegistrationId;
+    }
+
+    private void HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        // Handle the selected profile picture file
+        var file = e.File;
+        // You can process the file further or convert it to a base64 string if required
+        // Example Candidate.ProfilePic = Convert.ToBase64String(await file.OpenReadStream().ReadAllBytes());
+    }
+}

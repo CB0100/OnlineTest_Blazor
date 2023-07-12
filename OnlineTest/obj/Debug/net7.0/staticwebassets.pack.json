@@ -5,6 +5,10 @@
       "PackagePath": "staticwebassets\\OnlineTest.bundle.scp.css"
     },
     {
+      "Id": "D:\\Anand\\RND\\OnlineTest\\OnlineTest\\wwwroot\\JavaScript.js",
+      "PackagePath": "staticwebassets\\JavaScript.js"
+    },
+    {
       "Id": "D:\\Anand\\RND\\OnlineTest\\OnlineTest\\wwwroot\\css\\bootstrap\\bootstrap.min.css",
       "PackagePath": "staticwebassets\\css\\bootstrap\\bootstrap.min.css"
     },

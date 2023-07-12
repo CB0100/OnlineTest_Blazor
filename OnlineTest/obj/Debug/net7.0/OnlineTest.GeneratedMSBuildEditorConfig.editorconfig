@@ -24,6 +24,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRkUGFzc2FnZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[D:/Anand/RND/OnlineTest/OnlineTest/Pages/Candidate-List.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2FuZGlkYXRlLUxpc3QucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Anand/RND/OnlineTest/OnlineTest/Pages/CandidateForm.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2FuZGlkYXRlRm9ybS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [D:/Anand/RND/OnlineTest/OnlineTest/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ291bnRlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -38,6 +46,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [D:/Anand/RND/OnlineTest/OnlineTest/Pages/Passages.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUGFzc2FnZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Anand/RND/OnlineTest/OnlineTest/Pages/ReadPassage.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUmVhZFBhc3NhZ2UucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/Anand/RND/OnlineTest/OnlineTest/Shared/SurveyPrompt.razor]
